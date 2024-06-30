@@ -1,0 +1,13 @@
+# Target labels
+ bootloader
+# Source files and their labels
+D:/UIT/doan1/test-sensor/build/CMakeFiles/bootloader
+D:/UIT/doan1/test-sensor/build/CMakeFiles/bootloader.rule
+D:/UIT/doan1/test-sensor/build/CMakeFiles/bootloader-complete.rule
+D:/UIT/doan1/test-sensor/build/bootloader-prefix/src/bootloader-stamp/bootloader-build.rule
+D:/UIT/doan1/test-sensor/build/bootloader-prefix/src/bootloader-stamp/bootloader-configure.rule
+D:/UIT/doan1/test-sensor/build/bootloader-prefix/src/bootloader-stamp/bootloader-download.rule
+D:/UIT/doan1/test-sensor/build/bootloader-prefix/src/bootloader-stamp/bootloader-install.rule
+D:/UIT/doan1/test-sensor/build/bootloader-prefix/src/bootloader-stamp/bootloader-mkdir.rule
+D:/UIT/doan1/test-sensor/build/bootloader-prefix/src/bootloader-stamp/bootloader-patch.rule
+D:/UIT/doan1/test-sensor/build/bootloader-prefix/src/bootloader-stamp/bootloader-update.rule
