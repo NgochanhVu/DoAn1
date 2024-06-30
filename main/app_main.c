@@ -91,6 +91,7 @@ void example_i2s_init(void)
 }
 
 FILE* f;
+const char filename[] = "/recording.wav";
 
 void spiffs_task() {
     ESP_LOGI(TAG, "Initializing SPIFFS");
@@ -138,12 +139,12 @@ void spiffs_task() {
         }
     }
     ESP_LOGI(TAG, "Opening file");
-    f = fopen("/test-sensor/rec.txt", "w");
+    f = fopen(filename, "w");
     if (f == NULL) {
         ESP_LOGE(TAG, "Failed to open file for writing");
         return;
     }
-    
+    //ham listSPIFFS khong biet chuyen sang idf
 }
 /**
  * @brief debug buffer data
@@ -214,13 +215,15 @@ void example_i2s_adc_dac(void*arg)
     while (flash_wr_size < FLASH_RECORD_SIZE) {
         //read data from I2S bus, in this case, from ADC.
         i2s_read(EXAMPLE_I2S_NUM, (void*) i2s_read_buff, i2s_read_len, &bytes_read, portMAX_DELAY);
-        example_disp_buf((uint8_t*) i2s_read_buff, 64);
+        //example_disp_buf((uint8_t*) i2s_read_buff, 64);
         //save original data from I2S(ADC) into flash.
+
+        fprintf(f, i2s_read_buff, i2s_read_len);
+
         flash_wr_size += i2s_read_len;
         esp_rom_printf("Sound recording %u%%\n", flash_wr_size * 100 / FLASH_RECORD_SIZE);
         esp_rom_printf("Never Used Stack Size: %u\n", uxTaskGetStackHighWaterMark(NULL));
     }
-    fprintf(f, i2s_read_buff, i2s_read_len);
     fclose(f);
     ESP_LOGI(TAG, "File written");
     ESP_LOGI(TAG, "SPIFFS unmounted");
@@ -228,8 +231,7 @@ void example_i2s_adc_dac(void*arg)
     free(i2s_read_buff);
     i2s_read_buff = NULL;
 
-    uint8_t* flash_read_buff = (uint8_t*) calloc(i2s_read_len, sizeof(char));
-    uint8_t* i2s_write_buff = (uint8_t*) calloc(i2s_read_len, sizeof(char));
+    //ham listSPIFFS khong biet chuyen sang idf
 
     vTaskDelete(NULL);
 }
