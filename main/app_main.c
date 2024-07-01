@@ -93,6 +93,55 @@ void example_i2s_init(void)
 FILE* f;
 const char filename[] = "/recording.wav";
 
+const int headerSize = 44;
+void wavHeader(char* header, int wavSize) {
+    header[0] = 'R';
+    header[1] = 'I';
+    header[2] = 'F';
+    header[3] = 'F';
+    unsigned int fileSize = wavSize + headerSize - 8;
+    header[4] = fileSize & 0xFF;
+    header[5] = (fileSize >> 8) & 0xFF;
+    header[6] = (fileSize >> 16) & 0xFF;
+    header[7] = (fileSize >> 24) & 0xFF;
+    header[8] = 'W';
+    header[9] = 'A';
+    header[10] = 'V';
+    header[11] = 'E';
+    header[12] = 'f';
+    header[13] = 'm';
+    header[14] = 't';
+    header[15] = ' ';
+    header[16] = 0x10;
+    header[17] = 0x00;
+    header[18] = 0x00;
+    header[19] = 0x00;
+    header[20] = 0x01;
+    header[21] = 0x00;
+    header[22] = 0x01;
+    header[23] = 0x00;
+    header[24] = 0x80;
+    header[25] = 0x3E;
+    header[26] = 0x00;
+    header[27] = 0x00;
+    header[28] = 0x00;
+    header[29] = 0x7D;
+    header[30] = 0x01;
+    header[31] = 0x00;
+    header[32] = 0x02;    
+    header[33] = 0x00;    
+    header[34] = 0x10;    
+    header[35] = 0x00;    
+    header[36] = 'd';    
+    header[37] = 'a';    
+    header[38] = 't';    
+    header[39] = 'a';    
+    header[40] = wavSize & 0xff;
+    header[41] = wavSize >> 8 & 0xff;
+    header[42] = wavSize >> 16 & 0xff;
+    header[43] = wavSize >> 24 & 0xff;
+}
+
 void spiffs_task() {
     ESP_LOGI(TAG, "Initializing SPIFFS");
 
@@ -110,9 +159,8 @@ void spiffs_task() {
     if (ret != ESP_OK) {
         if (ret == ESP_FAIL) {
             ESP_LOGE(TAG, "Failed to mount or format filesystem");
-        } else if (ret == ESP_ERR_NOT_FOUND) {
-            ESP_LOGE(TAG, "Failed to find SPIFFS partition");
-        } else {
+        } 
+        else {
             ESP_LOGE(TAG, "Failed to initialize SPIFFS (%s)", esp_err_to_name(ret));
         }
         return;
@@ -127,6 +175,7 @@ void spiffs_task() {
     } else {
         ESP_LOGI(TAG, "Partition size: total: %d, used: %d", total, used);
     }
+
     // Check consistency of reported partiton size info.
     if (used > total) {
         ESP_LOGW(TAG, "Number of used bytes cannot be larger than total. Performing SPIFFS_check().");
@@ -144,6 +193,9 @@ void spiffs_task() {
         ESP_LOGE(TAG, "Failed to open file for writing");
         return;
     }
+    char* header[headerSize];
+    wavHeader(header, FLASH_RECORD_SIZE);
+    fprintf(f, header, headerSize);
     //ham listSPIFFS khong biet chuyen sang idf
 }
 /**
@@ -161,16 +213,6 @@ void example_disp_buf(uint8_t* buf, int length)
     printf("======\n");
 }
 
-// headerSize = 44;
-// void wavHeader(char* header, int wavSize) {
-//     header[0] = 'R';
-//     header[1] = 'I';
-//     header[2] = 'F';
-//     header[3] = 'F';
-//     unsigned int fileSize = wavSize + headerSize - 8;
-//     header[4] = fileSize & 0xFF;
-//     header[5] = fileSize & 0xFF;
-// }
 
 void example_i2s_adc_data_scale(uint8_t * d_buff, uint8_t* s_buff, uint32_t len)
 {
@@ -208,6 +250,7 @@ void example_i2s_adc_dac(void*arg)
     size_t bytes_read;
 
     char* i2s_read_buff = (char*) calloc(i2s_read_len, sizeof(char));
+    uint8_t* flash_write_buff = (uint8_t*) calloc(i2s_read_len, sizeof(char));
     i2s_adc_enable(EXAMPLE_I2S_NUM);
 
     printf("*****Start recording*****\n");
@@ -215,15 +258,16 @@ void example_i2s_adc_dac(void*arg)
     while (flash_wr_size < FLASH_RECORD_SIZE) {
         //read data from I2S bus, in this case, from ADC.
         i2s_read(EXAMPLE_I2S_NUM, (void*) i2s_read_buff, i2s_read_len, &bytes_read, portMAX_DELAY);
-        //example_disp_buf((uint8_t*) i2s_read_buff, 64);
+        example_disp_buf((uint8_t*) i2s_read_buff, 64);
         //save original data from I2S(ADC) into flash.
-
-        fprintf(f, i2s_read_buff, i2s_read_len);
-
+        example_i2s_adc_data_scale(flash_write_buff, (uint8_t*)i2s_read_buff, i2s_read_len);
+        //fprintf(f, i2s_read_buff, i2s_read_len);
+        //fwrite(i2s_read_buff,1 , i2s_read_len, f);
         flash_wr_size += i2s_read_len;
         esp_rom_printf("Sound recording %u%%\n", flash_wr_size * 100 / FLASH_RECORD_SIZE);
         esp_rom_printf("Never Used Stack Size: %u\n", uxTaskGetStackHighWaterMark(NULL));
     }
+    fprintf(f, i2s_read_buff, i2s_read_len);
     fclose(f);
     ESP_LOGI(TAG, "File written");
     ESP_LOGI(TAG, "SPIFFS unmounted");
