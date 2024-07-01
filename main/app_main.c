@@ -91,7 +91,6 @@ void example_i2s_init(void)
 }
 
 FILE* f;
-const char filename[] = "/recording.wav";
 
 const int headerSize = 44;
 void wavHeader(char* header, int wavSize) {
@@ -146,7 +145,7 @@ void spiffs_task() {
     ESP_LOGI(TAG, "Initializing SPIFFS");
 
     esp_vfs_spiffs_conf_t conf = {
-      .base_path = "/test-sensor",
+      .base_path = "/storage",
       .partition_label = NULL,
       .max_files = 5,
       .format_if_mount_failed = true
@@ -159,12 +158,24 @@ void spiffs_task() {
     if (ret != ESP_OK) {
         if (ret == ESP_FAIL) {
             ESP_LOGE(TAG, "Failed to mount or format filesystem");
-        } 
-        else {
+        } else if (ret == ESP_ERR_NOT_FOUND) {
+            ESP_LOGE(TAG, "Failed to find SPIFFS partition");
+        } else {
             ESP_LOGE(TAG, "Failed to initialize SPIFFS (%s)", esp_err_to_name(ret));
         }
         return;
     }
+
+
+    ESP_LOGI(TAG, "Performing SPIFFS_check().");
+    ret = esp_spiffs_check(conf.partition_label);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "SPIFFS_check() failed (%s)", esp_err_to_name(ret));
+        return;
+    } else {
+        ESP_LOGI(TAG, "SPIFFS_check() successful");
+    }
+
 
     size_t total = 0, used = 0;
     ret = esp_spiffs_info(conf.partition_label, &total, &used);
@@ -176,27 +187,39 @@ void spiffs_task() {
         ESP_LOGI(TAG, "Partition size: total: %d, used: %d", total, used);
     }
 
+#
     // Check consistency of reported partiton size info.
     if (used > total) {
         ESP_LOGW(TAG, "Number of used bytes cannot be larger than total. Performing SPIFFS_check().");
         ret = esp_spiffs_check(conf.partition_label);
-         if (ret != ESP_OK) {
+        // Could be also used to mend broken files, to clean unreferenced pages, etc.
+        // More info at https://github.com/pellepl/spiffs/wiki/FAQ#powerlosses-contd-when-should-i-run-spiffs_check
+        if (ret != ESP_OK) {
             ESP_LOGE(TAG, "SPIFFS_check() failed (%s)", esp_err_to_name(ret));
             return;
         } else {
             ESP_LOGI(TAG, "SPIFFS_check() successful");
         }
     }
+
+    // Use POSIX and C standard library functions to work with files.
+    // First create a file.
     ESP_LOGI(TAG, "Opening file");
-    f = fopen(filename, "w");
+    FILE* f = fopen("/storage/recording.wav", "w");
     if (f == NULL) {
         ESP_LOGE(TAG, "Failed to open file for writing");
         return;
     }
+    fprintf(f, "Hello World!\n");
+    fclose(f);
+    ESP_LOGI(TAG, "File written");
     char* header[headerSize];
     wavHeader(header, FLASH_RECORD_SIZE);
-    fprintf(f, header, headerSize);
-    //ham listSPIFFS khong biet chuyen sang idf
+    fprintf(f,header, headerSize);
+
+    // All done, unmount partition and disable SPIFFS
+    esp_vfs_spiffs_unregister(conf.partition_label);
+    ESP_LOGI(TAG, "SPIFFS unmounted");
 }
 /**
  * @brief debug buffer data
@@ -261,7 +284,7 @@ void example_i2s_adc_dac(void*arg)
         example_disp_buf((uint8_t*) i2s_read_buff, 64);
         //save original data from I2S(ADC) into flash.
         example_i2s_adc_data_scale(flash_write_buff, (uint8_t*)i2s_read_buff, i2s_read_len);
-        //fprintf(f, i2s_read_buff, i2s_read_len);
+        fprintf(f, i2s_read_buff, i2s_read_len);
         //fwrite(i2s_read_buff,1 , i2s_read_len, f);
         flash_wr_size += i2s_read_len;
         esp_rom_printf("Sound recording %u%%\n", flash_wr_size * 100 / FLASH_RECORD_SIZE);
@@ -284,7 +307,7 @@ esp_err_t app_main(void)
 {
     example_i2s_init();
     esp_log_level_set("I2S", ESP_LOG_INFO);
-    spiffs_task();
+    xTaskCreate(spiffs_task, "spiff_task", 1024, NULL, 1, NULL);
     xTaskCreate(example_i2s_adc_dac, "example_i2s_adc_dac", 1024 * 2, NULL, 5, NULL);
     return ESP_OK;
 }

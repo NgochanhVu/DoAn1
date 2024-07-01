@@ -670,6 +670,9 @@ D:/UIT/doan1/test-sensor/build/esp-idf/wifi_provisioning/CMakeFiles/install.dir
 D:/UIT/doan1/test-sensor/build/esp-idf/wifi_provisioning/CMakeFiles/install/local.dir
 D:/UIT/doan1/test-sensor/build/esp-idf/wifi_provisioning/CMakeFiles/install/strip.dir
 D:/UIT/doan1/test-sensor/build/esp-idf/main/CMakeFiles/__idf_main.dir
+D:/UIT/doan1/test-sensor/build/esp-idf/main/CMakeFiles/spiffs_storage_bin.dir
+D:/UIT/doan1/test-sensor/build/esp-idf/main/CMakeFiles/storage-flash.dir
+D:/UIT/doan1/test-sensor/build/esp-idf/main/CMakeFiles/encrypted-storage-flash.dir
 D:/UIT/doan1/test-sensor/build/esp-idf/main/CMakeFiles/edit_cache.dir
 D:/UIT/doan1/test-sensor/build/esp-idf/main/CMakeFiles/rebuild_cache.dir
 D:/UIT/doan1/test-sensor/build/esp-idf/main/CMakeFiles/list_install_components.dir
