@@ -1,7 +1,7 @@
 {
     "version":            "1",
     "project_name":       "test-sensor",
-    "project_version":    "3b6b139-dirty",
+    "project_version":    "456dfda-dirty",
     "project_path":       "D:/UIT/doan1/test-sensor",
     "idf_path":           "D:/Espressif/frameworks/esp-idf-v4.4.7",
     "build_dir":          "D:/UIT/doan1/test-sensor/build",
